@@ -1,5 +1,8 @@
 # DST80 Reversing & Brute-force Suite
 
+Based on DST80 (non reversed) found here [![Gist - DST80 Reference](https://img.shields.io/badge/Gist-DST80_Reference-lightgrey?style=for-the-badge&logo=github)](https://gist.github.com/rqu1/f236b68a2b3efd9b22eacd3f7003cd15)
+
+
 This project provides a high-performance implementation for recovering **TI DST80** (Digital Signature Transponder) keys using OpenCL. It is designed to demonstrate how architectural weaknesses and constructor-specific constants can reduce the theoretical 80-bit security margin to a practical brute-force attack.
 
 ## The Theory: Why it is breakable
