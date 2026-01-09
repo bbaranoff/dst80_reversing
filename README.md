@@ -86,6 +86,4 @@ python dst80_reverse.py <c1> <t1> <c2> <t2> 4228250625
 
 Below is a successful recovery of a key using the dual-challenge method.
 
-**Next Step:** Would you like me to refine the technical explanation of the bit-masking logic between KL and KR in the "The Theory" section?
-
 ![Search Demo](demo.png)
