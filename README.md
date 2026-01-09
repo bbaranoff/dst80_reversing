@@ -94,8 +94,8 @@ The core of this brute-force efficiency lies in the relationship between the Lef
 
 To successfully recover the key, the tool reconstructs the 80-bit space by generating  as a transformation of  for every attempt:
 
-1. ** Generation:** We iterate through the unknown bytes (e.g., `i, j, k, l`) and append the known constructor bytes (e.g., `m`).
-2. ** Mirroring:** For each byte in , the corresponding byte in  is calculated as `255 - byte` (a bitwise NOT in the 8-bit range).
+1. **Generation:** We iterate through the unknown bytes (e.g., `i, j, k, l`) and append the known constructor bytes (e.g., `m`).
+2. **Mirroring:** For each byte in , the corresponding byte in  is calculated as `255 - byte` (a bitwise NOT in the 8-bit range).
 
 **Why this is mandatory:**
 If you attempt to brute-force  and  as independent 40-bit values, the search space becomes , which is cryptographically secure. By enforcing this **Constructor Masking** during the search, we align with the manufacturer's internal key generation logic, collapsing the search space to a manageable  or  range.
