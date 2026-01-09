@@ -12,7 +12,7 @@ The DST80 algorithm uses an 80-bit key, traditionally split into two 40-bit halv
 
 ### Performance & Strategy (IACR Method)
 
-As described in research papers ([![IACR TCHES - Dismantling DST80](https://img.shields.io/badge/IACR_TCHES-Dismantling_DST80-blue?style=for-the-badge&logo=read-the-docs)](https://tches.iacr.org/index.php/TCHES/article/view/8546)), the attack follows a tiered approach:
+As described in research papers [![IACR TCHES - Dismantling DST80](https://img.shields.io/badge/IACR_TCHES-Dismantling_DST80-blue?style=for-the-badge&logo=read-the-docs)](https://tches.iacr.org/index.php/TCHES/article/view/8546), the attack follows a tiered approach:
 
 ![IACR Algorithm](iacr.png)
 
