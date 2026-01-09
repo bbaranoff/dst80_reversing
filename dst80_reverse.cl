@@ -86,36 +86,23 @@ __kernel void dst80_search(
     size_t gid = get_global_id(0);
     ulong idx = global_base + gid;
 
-    ulong i, j, k, l, m;
+    // Génération des clés kl/kr
+    ulong i = idx % 255;
+    ulong j = (idx / 255) % 255;
+    ulong k = (idx / 65025) % 255;
+    ulong l = (idx / 16581375) % 255;
+    ulong m = (idx / 4228250625) % 255;
 
-    // Détection automatique de la profondeur de recherche
-    // Si global_base + total_threads > 255^4, on passe en mode 5 octets
-    if (global_base < 4228250625UL) {
-        // Mode 4 octets variables + m fixe (0x2f)
-        m = 0x2f; 
-        i = idx % 255;
-        j = (idx / 255) % 255;
-        k = (idx / 65025) % 255;
-        l = (idx / 16581375) % 255;
-    } else {
-        // Mode 5 octets variables (Reverse Total)
-        i = idx % 255;
-        j = (idx / 255) % 255;
-        k = (idx / 65025) % 255;
-        l = (idx / 16581375) % 255;
-        m = (idx / 4228250625UL) % 255;
-    }
-
-    // Reconstruction de KL : [i][j][k][l][m]
     ulong kl_orig = (i << 32) | (j << 24) | (k << 16) | (l << 8) | m;
-    
-    // Reconstruction de KR (symétrie inverse)
     ulong kr_orig = (((255 - m) << 32) | ((255 - l) << 24) | ((255 - k) << 16) | ((255 - j) << 8) | (255 - i));
 
-    // Simulation et double vérification
+    // Test sur le premier challenge
     ulong res1 = simulate_dst80(kl_orig, kr_orig, challenge1);
+
     if ((uint)(res1 & 0xFFFFFFUL) == target1) {
+        // Double vérification avec le second challenge
         ulong res2 = simulate_dst80(kl_orig, kr_orig, challenge2);
+        
         if ((uint)(res2 & 0xFFFFFFUL) == target2) {
             uint pos = atomic_inc(out_count);
             if (pos < 100) {
