@@ -1,0 +1,11 @@
+markdown-it-py==4.0.0
+mdurl==0.1.2
+numpy==2.2.6
+platformdirs==4.5.1
+Pygments==2.19.2
+pyopencl==2026.1
+pytools==2025.2.5
+rich==14.2.0
+siphash24==1.8
+tqdm==4.67.1
+typing_extensions==4.15.0
