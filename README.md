@@ -138,3 +138,35 @@ The script will print a clean summary in your terminal:
 * **KeyR**: The derived mirrored key.
 * **Challenge**: The 40-bit input nonce.
 * **RESPONSE**: The final **0xXXXXXX** signature used for authentication.
+
+| `dst80_constants.py` | Serial-known search: recovers the **constructor constants** by brute-forcing only the constant space, modelling a serial-derived derivation. |
+
+### 5. Constructor Constant Recovery (Known serial)
+
+This is the **constant-extraction** step of the tiered attack — the software
+counterpart of dumping the constants via firmware glitching. Unlike the other
+scripts, it does **not** assume the `KR = revcomp(KL)` diagonal. Instead it
+takes the publicly readable transponder **serial** as a fixed input and
+brute-forces only the unknown **constructor constants**, deriving both `KL`
+and `KR` from `derive_keys(serial, c0, c1, c2)`.
+
+Because the deployed entropy of a serial-derived scheme lives entirely in those
+constants, the search space collapses to **2^24** (three constant bytes) and is
+recovered in ~0.1 s on an RTX 4090. Once the constants are known, every other
+transponder of the same constructor is reduced to its per-unit variable bytes
+(or computed directly from its serial — no brute-force at all).
+
+```bash
+python dst80_constants.py <serial> <c1> <t1> <c2> <t2>
+# default space: 2^24 (3 constant bytes)
+# pass 4294967296 for 2^32 if the scheme has a 4th constant byte
+```
+
+> ⚠️ **You must supply the derivation.** The `derive_keys()` block in
+> `dst80_constants.cl` ships as an **illustrative placeholder** and matches no
+> real constructor. Replace it with the reverse-engineered key-diversification
+> function of the target manufacturer (per Wouters et al., *Dismantling DST80*,
+> IACR TCHES 2020(2)) before running against real captures. Validate the harness
+> end-to-end first: generate two challenge/response pairs from a known
+> serial + known constants, then confirm the script recovers exactly those
+> constants.
