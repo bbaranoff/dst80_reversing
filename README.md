@@ -119,7 +119,6 @@ python generate.py --kl 0xdeadbeef00 --challenge 0xcafebabe01
  SIGNATURE (RES)  0x6a1bfc     
 ```
 
-```
 * **Full Command:**
 
 ```bash
