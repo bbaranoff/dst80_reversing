@@ -6,7 +6,6 @@
 #define BV2I4(b3,b2,b1,b0)    (((b3)<<3)|((b2)<<2)|((b1)<<1)|(b0))
 #define KEY_MASK              ((1UL<<39) - 1UL)
 
-// Fonctions de table de vérité
 static inline uint fa(uint x){ return BIT(0x3A35ACC5UL, x); }
 static inline uint fb(uint x){ return BIT(0xAC35742EUL, x); }
 static inline uint fc(uint x){ return BIT(0xB81D8BD1UL, x); }
@@ -33,12 +32,12 @@ static inline uint f_func(ulong k, ulong s){
     fs[13]=fc(BV2I5(BIT(k,22),BIT(s,14),BIT(k,14),BIT(s,6),BIT(k,6)));
     fs[14]=fb(BV2I5(BIT(s,39),BIT(k,39),BIT(s,31),BIT(k,31),BIT(s,23)));
     fs[15]=fa(BV2I5(BIT(k,23),BIT(s,15),BIT(k,15),BIT(s,7),BIT(k,7)));
-    
+
     uint gb0 = fg(BV2I4(fs[3], fs[2], fs[1], fs[0]));
     uint gb1 = fg(BV2I4(fs[7], fs[6], fs[5], fs[4]));
     uint gb2 = fg(BV2I4(fs[11],fs[10],fs[9], fs[8]));
     uint gb3 = fg(BV2I4(fs[15],fs[14],fs[13],fs[12]));
-    
+
     return h(BV2I4(gb0,gb1,gb2,gb3));
 }
 
@@ -61,9 +60,9 @@ static inline ulong simulate_dst80(ulong kl, ulong kr, ulong challenge) {
     for(int r=0; r<200; r++){
         ulong ml = p2_fast(kl);
         if(ml & (1UL << 39)) ml ^= KEY_MASK;
-        ulong mr = p2_fast(kr); 
+        ulong mr = p2_fast(kr);
         if(mr & (1UL << 39)) mr ^= KEY_MASK;
-        
+
         ulong key_merged = ((BIT_SLICE(ml,39,20)<<20)|BIT_SLICE(mr,39,20));
         uint t = f_func(key_merged, s) ^ (s & 3UL);
         s = (s >> 2) | ((ulong)t << 38);
@@ -85,26 +84,31 @@ __kernel void dst80_search(
     size_t gid = get_global_id(0);
     ulong idx = global_base + gid;
 
-    // Logique corrigée : kl = i,j,k,l,m | kr = (255-m),(255-l),(255-k),(255-j),(255-i)
-    ulong m = 0x2f; // Fixé en dur
-    ulong i = idx % 255;
-    ulong j = (idx / 255) % 255;
-    ulong k = (idx / 65025) % 255;
-    ulong l = (idx / 16581375) % 255;
+    // -------- INDEXATION BASE 256 -- octet bas (m) fige a 0x2f --------
+    // 4 octets variables : i=MSB(KL) ... l ; m fixe
+    // Espace complet : 256^4 = 2^32 = 4 294 967 296
+    ulong m = 0x2fUL;                 // octet constructeur connu
+    ulong i = (idx >>  0) & 0xFFUL;
+    ulong j = (idx >>  8) & 0xFFUL;
+    ulong k = (idx >> 16) & 0xFFUL;
+    ulong l = (idx >> 24) & 0xFFUL;
 
     ulong kl_orig = (i << 32) | (j << 24) | (k << 16) | (l << 8) | m;
-    ulong kr_orig = (((255 - m) << 32) | ((255 - l) << 24) | ((255 - k) << 16) | ((255 - j) << 8) | (255 - i));
 
-    // Test Challenge 1
+    ulong kr_orig = ((m ^ 0xFFUL) << 32)
+                  | ((l ^ 0xFFUL) << 24)
+                  | ((k ^ 0xFFUL) << 16)
+                  | ((j ^ 0xFFUL) <<  8)
+                  |  (i ^ 0xFFUL);
+    // ----------------------------------------------------------------
+
     ulong res1 = simulate_dst80(kl_orig, kr_orig, challenge1);
-
     if ((uint)(res1 & 0xFFFFFFUL) == target1) {
-        // Test Challenge 2 pour éliminer les faux positifs
         ulong res2 = simulate_dst80(kl_orig, kr_orig, challenge2);
         if ((uint)(res2 & 0xFFFFFFUL) == target2) {
             uint pos = atomic_inc(out_count);
             if (pos < 100) {
-                out_matches[pos * 2] = kl_orig;
+                out_matches[pos * 2]     = kl_orig;
                 out_matches[pos * 2 + 1] = kr_orig;
             }
         }

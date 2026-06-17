@@ -33,12 +33,12 @@ static inline uint f_func(ulong k, ulong s){
     fs[13]=fc(BV2I5(BIT(k,22),BIT(s,14),BIT(k,14),BIT(s,6),BIT(k,6)));
     fs[14]=fb(BV2I5(BIT(s,39),BIT(k,39),BIT(s,31),BIT(k,31),BIT(s,23)));
     fs[15]=fa(BV2I5(BIT(k,23),BIT(s,15),BIT(k,15),BIT(s,7),BIT(k,7)));
-    
+
     uint gb0 = fg(BV2I4(fs[3], fs[2], fs[1], fs[0]));
     uint gb1 = fg(BV2I4(fs[7], fs[6], fs[5], fs[4]));
     uint gb2 = fg(BV2I4(fs[11],fs[10],fs[9], fs[8]));
     uint gb3 = fg(BV2I4(fs[15],fs[14],fs[13],fs[12]));
-    
+
     return h(BV2I4(gb0,gb1,gb2,gb3));
 }
 
@@ -56,7 +56,7 @@ static inline ulong lfsr_round(ulong x){
     return (x>>1)|((ulong)feedback<<39);
 }
 
-// Fonction pour simuler les 200 rounds DST80
+// Simule les 200 rounds DST80
 static inline ulong simulate_dst80(ulong kl, ulong kr, ulong challenge) {
     ulong s = challenge;
     for(int r=0; r<200; r++){
@@ -64,7 +64,7 @@ static inline ulong simulate_dst80(ulong kl, ulong kr, ulong challenge) {
         if(ml & (1UL << 39)) ml ^= KEY_MASK;
         ulong mr = p2_fast(kr);
         if(mr & (1UL << 39)) mr ^= KEY_MASK;
-        
+
         ulong key_merged = ((BIT_SLICE(ml,39,20)<<20)|BIT_SLICE(mr,39,20));
         uint t = f_func(key_merged, s) ^ (s & 3UL);
         s = (s >> 2) | ((ulong)t << 38);
@@ -86,27 +86,33 @@ __kernel void dst80_search(
     size_t gid = get_global_id(0);
     ulong idx = global_base + gid;
 
-    // Génération des clés kl/kr
-    ulong i = idx % 255;
-    ulong j = (idx / 255) % 255;
-    ulong k = (idx / 65025) % 255;
-    ulong l = (idx / 16581375) % 255;
-    ulong m = (idx / 4228250625) % 255;
+    // -------- INDEXATION BASE 256 (exhaustive, sans division entiere) --------
+    // 5 octets variables : i=MSB(KL) ... m=LSB(KL)
+    // Espace complet : 256^5 = 2^40 = 1 099 511 627 776
+    ulong i = (idx >>  0) & 0xFFUL;
+    ulong j = (idx >>  8) & 0xFFUL;
+    ulong k = (idx >> 16) & 0xFFUL;
+    ulong l = (idx >> 24) & 0xFFUL;
+    ulong m = (idx >> 32) & 0xFFUL;
 
     ulong kl_orig = (i << 32) | (j << 24) | (k << 16) | (l << 8) | m;
-    ulong kr_orig = (((255 - m) << 32) | ((255 - l) << 24) | ((255 - k) << 16) | ((255 - j) << 8) | (255 - i));
 
-    // Test sur le premier challenge
+    // Symetrie constructeur : KR = reverse-octets + complement bit-a-bit de KL
+    // (x ^ 0xFF == 255 - x sur un octet, mais reste un masque -> pas de soustraction)
+    ulong kr_orig = ((m ^ 0xFFUL) << 32)
+                  | ((l ^ 0xFFUL) << 24)
+                  | ((k ^ 0xFFUL) << 16)
+                  | ((j ^ 0xFFUL) <<  8)
+                  |  (i ^ 0xFFUL);
+    // ------------------------------------------------------------------------
+
     ulong res1 = simulate_dst80(kl_orig, kr_orig, challenge1);
-
     if ((uint)(res1 & 0xFFFFFFUL) == target1) {
-        // Double vérification avec le second challenge
         ulong res2 = simulate_dst80(kl_orig, kr_orig, challenge2);
-        
         if ((uint)(res2 & 0xFFFFFFUL) == target2) {
             uint pos = atomic_inc(out_count);
             if (pos < 100) {
-                out_matches[pos * 2] = kl_orig;
+                out_matches[pos * 2]     = kl_orig;
                 out_matches[pos * 2 + 1] = kr_orig;
             }
         }
