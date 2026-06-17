@@ -104,27 +104,30 @@ The script assumes the common automotive implementation where the 80-bit key is 
 Simply run the script to use the built-in default values (useful for verifying your environment):
 
 ```bash
-python generate.py
 
+(.env) nirvana@lenovo:~/dst80_reversing$ python generate.py --kl 0xdeadbeef00 --challenge 0xcafebabe00
+   DST80 Generation Results    
+ Key Left (KL)    0xdeadbeef00 
+ Key Right (KR)   0xff10415221 
+ Challenge        0xcafebabe00 
+ SIGNATURE (RES)  0xaeecc2     
+(.env) nirvana@lenovo:~/dst80_reversing$ python generate.py --kl 0xdeadbeef00 --challenge 0xcafebabe01
+   DST80 Generation Results    
+ Key Left (KL)    0xdeadbeef00 
+ Key Right (KR)   0xff10415221 
+ Challenge        0xcafebabe01 
+ SIGNATURE (RES)  0x6a1bfc     
 ```
-### 3. Custom Challenges & Keys
-
-You can pass your own Hex values using the `--kl` and `--challenge` flags:
-
-* **To sign a specific challenge:**
-```bash
-python generate.py --challenge 0xABCDE12345
-
-```
-* **To use a specific recovered KeyL:**
-```bash
-python generate.py --kl 0xFD4AEDD12F
 
 ```
 * **Full Command:**
 ```bash
-python generate.py --kl 0x1122334455 --challenge 0x6162636465
+(.env) nirvana@lenovo:~/dst80_reversing$ python dst80_reverse.py 0xcafebabe00 0xaeecc2 0xcafebabe01 0x6a1bfc 4228250625
+Bruteforcing with GPU : NVIDIA GeForce RTX 4090 Laptop GPU
+100%|███████████████████████████████████████████| 4228250625/4228250625 [00:26<00:00, 157150855.66keys/s]
 
+1 MATCH(S) TROUVÉ(S) !!!
+Match 1: kl=0xdeadbeef00, kr=0xff10415221
 ```
 ### 4. Output Breakdown
 
