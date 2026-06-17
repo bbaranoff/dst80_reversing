@@ -121,6 +121,7 @@ python generate.py --kl 0xdeadbeef00 --challenge 0xcafebabe01
 
 ```
 * **Full Command:**
+
 ```bash
 python dst80_reverse.py 0xcafebabe00 0xaeecc2 0xcafebabe01 0x6a1bfc 4228250625
 Bruteforcing with GPU : NVIDIA GeForce RTX 4090 Laptop GPU
